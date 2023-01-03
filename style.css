@@ -1,0 +1,60 @@
+#canvas {
+    outline: 1px solid black;
+    margin: 0px;
+}
+#canvas2 {
+    position: relative;
+    bottom: 120px;
+    left: 120px;
+}
+
+container {
+    display: flex;
+    flex-direction: row;
+    margin: 0px;
+    margin-top: 10px;
+}
+
+.slider {
+    width: 400px;
+}
+
+.startPosButton {
+    margin-left: 10px;
+}
+.startPosButton:hover {
+    background-color: gray;
+    color: white;
+}
+.finPosButton {
+    margin-left: 10px;
+}
+.finPosButton:hover {
+    background-color: green;
+    color: white;
+}
+
+.fixObstacles {
+    margin-left: 10px;
+}
+.fixObstacles:hover {
+    background-color: red;
+    color: white;
+}
+.makeProjection {
+    margin-left: 10px;
+}
+.makeProjection:hover {
+    background-color: gray;
+    color: white;
+}
+
+#fixParameter {
+    margin-left: 10px;
+}
+
+#valueInput {
+    margin-left: 10px;
+    width: 50px;
+    text-align: center;
+}

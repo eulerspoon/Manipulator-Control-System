@@ -1,0 +1,36 @@
+function discretScreenToBased(x, y) {
+    return [x - (600 / discret), (600 / discret) - y];
+}
+
+function x1() {
+    return x0 - l * Math.cos(degToRads(a1()));
+}
+function y1() {
+    return y0 - l * Math.sin(degToRads(a1()));
+}
+function a1() {
+    return get_f1();
+}
+
+function x2() {
+    return x1() - l * Math.cos(degToRads(a2()));
+}
+function y2() {
+    return y1() - l * Math.sin(degToRads(a2()));
+}
+function a2() {
+    return a1() + get_f2() - 180;
+}
+function x3() {
+    return x2() - l * Math.cos(degToRads(a3()));
+}
+function y3() {
+    return y2() - l * Math.sin(degToRads(a3()));
+}
+function a3() {
+    return a1() + get_f2() - 180 + get_f3() - 180;
+}
+
+function discretCenterInScreen(discX, discY) {
+     return discX*discret + discret / 2, discY*discret + discret / 2;
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>v2</title>
+    <link rel = "stylesheet" href = "style.css">
+</head>
+<body>
+	<canvas id = 'canvas'></canvas>
+    <canvas id = 'canvas2'></canvas>
+
+    <container class = "sliders">
+        <input class="slider" type="range" id="f1" min=0 max=360 step=0.1 value = 0 oninput="linkChange()" onchange="linkChange()">
+
+        <input class="slider" type="range" id="f2" min=0 max=360 step=0.1 value = 180 oninput="linkChange()" onchange="linkChange()">
+
+        <input class="slider" type="range" id="f3" min=0 max=360 step=0.1 value = 180 oninput="linkChange()" onchange="linkChange()">
+    </container>
+    
+    <container class = "buttonsAndMore">
+        <button class = "startPosButton" onclick="fixStartPos()" style = "width: 100px; height: 50px;">Стартовое положение</button>
+
+        <button class = "finPosButton" onclick="fixFinPos()" style = "width: 100px; height: 50px;">Конечное положение</button>
+
+        <button class = "fixObstacles" onclick="handleObstacles()" style = "width: 100px; height: 50px;">Обработать препятствия</button>
+
+        <select id = 'fixParameter'> 
+            <option> fi1 </option>
+            <option> fi2 </option>
+            <option> fi3 </option>
+        </select>
+
+        <input type = "text" id = 'valueInput'>
+
+        <button class = "makeProjection" onclick="makeProjection()" style = "width: 100px; height: 50px;">Создать проекцию</button>
+    
+    </container>
+
+    <script src = "script.js"></script>
+
+</body>
+</html>
