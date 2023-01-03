@@ -309,7 +309,7 @@ function handleObstacles() {
             for (let i = 0; i < 360 / discretFi; i++) {
                 for (let j = 0; j < 360 / discretFi; j++) {
                     if (!(already.includes(abandoned))) {
-                        console.log(abandoned);
+                        // console.log(abandoned);
                         already.push(abandoned);
                     }
                     if (abandoned === 360 / discretFi) {
@@ -324,7 +324,21 @@ function handleObstacles() {
                 }
             }
             // второе звено
-            
+            for (let lx = Math.round(l - r) + 1; lx <= l; lx++) {
+                for (let i = 0; i < 360 / discretFi; i++) {
+                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos((l**2 + r**2 - lx**2) / (2 * l * r))) + 360);
+                    abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos((l**2 + lx**2 - r**2) / (2*l*lx))) + 360);
+                    // console.log(abandoned_f1, abandoned_f2);
+                    PS[abandoned_f1 === 360 / discretFi ? 0 : abandoned_f1][abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2][i] = 1;
+
+                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos( (l**2 + r**2 - lx**2) / (2*l*r))));
+                    abandoned_f2 = fiToDiscret(radToDegs(Math.acos((l**2 + lx**2 - r**2) / (2*l*lx))));
+                    // console.log(abandoned_f1, abandoned_f2);
+                    PS[abandoned_f1 === 360 / discretFi ? 0 : abandoned_f1][abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2][i] = 1;
+                }
+            }
+            // третье звено
+            // TODO - тут надо разбираться с переходом в повёрнутую систему координат, сделаешь завтра.
         }
     }
     console.log('OK');
