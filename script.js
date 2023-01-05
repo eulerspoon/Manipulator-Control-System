@@ -18,7 +18,7 @@ canvas.width = 600;
 canvas.height = 600;
 
 // ширина линий
-ctx.lineWidth = 1;
+ctx.lineWidth = 2;
 
 // препятствия
 let obstacles = [];
@@ -26,7 +26,7 @@ let obstacles = [];
 // дискрет препятствия в рабочей зоне
 let discret = 4;
 // дискрет угла
-let discretFi = 4;
+let discretFi = 2;
 
 let f1 = 0;
 let f2 = 180;
@@ -34,8 +34,6 @@ let f3 = 180;
 
 // пространство состояний
 let PS = [];
-
-let fazeSpace = [];
 
 let startPosIsFixed = false;
 let finPosIsFixed = false;
@@ -54,10 +52,12 @@ for (let i = 0; i < 360 / discretFi; i++) {
         PS[i].push([])
         for (let k = 0; k < 360 / discretFi; k++) {
             if ((j*discretFi > 270) && (k*discretFi > 900 - 2*j*discretFi)) {
-                PS[i][j].push(1);
+                // PS[i][j].push(1);
+                PS[i][j].push(0);
             } else {
                 if ((j*discretFi < 90) && (k*discretFi <= 180 - 2*j*discretFi)) {
-                    PS[i][j].push(1);
+                    // PS[i][j].push(1);
+                    PS[i][j].push(0);
                 } else {
                     PS[i][j].push(0);
                 }
@@ -298,50 +298,126 @@ function linkChange() {
 }
 
 function handleObstacles() {
-    already = [];
+    points = [];
     for (let obstacleIndex = 0; obstacleIndex < obstacles.length; obstacleIndex++) {
+
         cur = obstacles[obstacleIndex];
         r = dist(0, 0, cur[0], cur[1]);
         fi = radToDegs(fiPrepInRads(cur[0], cur[1]));
+
+        abandoned = fiToDiscret(fi);
+        let neighs = null;
+        // все касания первого звена
         if (r <= l) {
-            abandoned = fiToDiscret(fi);
-            // первое звено
             for (let i = 0; i < 360 / discretFi; i++) {
                 for (let j = 0; j < 360 / discretFi; j++) {
-                    if (!(already.includes(abandoned))) {
-                        // console.log(abandoned);
-                        already.push(abandoned);
-                    }
                     if (abandoned === 360 / discretFi) {
                         abandoned = 0;
                     }
                     PS[abandoned][i][j] = 1;
-                    // расширяем.
-                    if (abandoned > 0 && abandoned < 360 / discretFi - 1) {
-                        PS[abandoned + 1][i][j] = 1;
-                        PS[abandoned - 1][i][j] = 1;
+                    // points.push([abandoned*discretFi, i*discretFi, j*discretFi]);
+
+                    // расширение
+                    neighs = neighbors26(abandoned, i, j);
+                    for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                        [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                        PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
                     }
                 }
             }
-            // второе звено
-            for (let lx = Math.round(l - r) + 1; lx <= l; lx++) {
-                for (let i = 0; i < 360 / discretFi; i++) {
-                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos((l**2 + r**2 - lx**2) / (2 * l * r))) + 360);
-                    abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos((l**2 + lx**2 - r**2) / (2*l*lx))) + 360);
-                    // console.log(abandoned_f1, abandoned_f2);
-                    PS[abandoned_f1 === 360 / discretFi ? 0 : abandoned_f1][abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2][i] = 1;
-
-                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos( (l**2 + r**2 - lx**2) / (2*l*r))));
-                    abandoned_f2 = fiToDiscret(radToDegs(Math.acos((l**2 + lx**2 - r**2) / (2*l*lx))));
-                    // console.log(abandoned_f1, abandoned_f2);
-                    PS[abandoned_f1 === 360 / discretFi ? 0 : abandoned_f1][abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2][i] = 1;
-                }
-            }
-            // третье звено
-            // TODO - тут надо разбираться с переходом в повёрнутую систему координат, сделаешь завтра.
         }
+        // все касания второго звена
+        for (let lx = (r < l) ? l - r : r - l; lx <= l; lx += 0.125) {
+            for (let i = 0; i < 360 / discretFi; i++) {
+                abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(Number(((l**2 + r**2 - lx**2) / (2 * l * r)).toFixed(10)))) + 360);
+                abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1
+
+                abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(Number(((l**2 + lx**2 - r**2) / (2*l*lx)).toFixed(10)))) + 360);
+                abandoned_f2 = (abandoned_f2 === 360 / discretFi) ? 0 : abandoned_f2;
+
+                PS[abandoned_f1][abandoned_f2][i] = 1;
+                // расширение
+                neighs = neighbors26(abandoned_f1, abandoned_f2, i);
+                for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                    [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                    PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                }
+
+                // points.push([abandoned_f1*discretFi, abandoned_f2*discretFi, i*discretFi]);
+
+                abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos(Number(((l**2 + r**2 - lx**2) / (2*l*r)).toFixed(10)))));
+                abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1;
+
+                abandoned_f2 = fiToDiscret(radToDegs(Math.acos(Number(((l**2 + lx**2 - r**2) / (2*l*lx)).toFixed(10)))));
+                abandoned_f2 = (abandoned_f2 === 360 / discretFi) ? 0 : abandoned_f2;
+
+                PS[abandoned_f1][abandoned_f2][i] = 1;
+                // расширение
+                neighs = neighbors26(abandoned_f1, abandoned_f2, i);
+                for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                    [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                    PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                }
+                // points.push([abandoned_f1*discretFi, abandoned_f2*discretFi, i*discretFi]);
+            }
+        }
+        // третье звено
+        // for (let i = 0; i < 360 / discretFi; i++) {
+        //     [newX, newY] = toNew(cur[0], cur[1], i*discretFi);
+        //     newR = dist(0, 0, newX, newY);
+        //     newFi = radToDegs(fiPrepInRads(newX, newY));
+        //     for (let lx = (newR <= l) ? l - newR: newR - l; lx <= l; lx += 0.0625) {
+                
+        //         abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) - Math.acos(Number(((l**2 + newR**2 - lx**2) / (2 * l * newR)).toFixed(10)))));
+        //         abandoned_f2 = abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2;
+
+        //         abandoned_f3 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(Number(((l**2 + lx**2 - newR**2) / (2*l*lx)).toFixed(10)))));
+        //         abandoned_f3 = abandoned_f3 === 360 / discretFi ? 0 : abandoned_f3;
+
+        //         PS[i][abandoned_f2][abandoned_f3] = 1;
+        //         // расширение
+        //         neighs = neighbors26(i, abandoned_f2, abandoned_f3);
+        //         for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+        //             [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+        //             PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+        //         }
+        //         // points.push([i*discretFi, abandoned_f2*discretFi, abandoned_f3*discretFi]);
+
+        //         abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) + Math.acos(Number(((l**2 + newR**2 - lx**2) / (2*l*newR)).toFixed(10)))));
+        //         abandoned_f2 = abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2;
+
+        //         abandoned_f3 = fiToDiscret(radToDegs(Math.acos(Number(((l**2 + lx**2 - newR**2) / (2*l*lx)).toFixed(10)))));
+        //         abandoned_f3 = abandoned_f3 === 360 / discretFi ? 0 : abandoned_f3;
+
+        //         PS[i][abandoned_f2][abandoned_f3] = 1;
+        //         // расширение
+        //         neighs = neighbors26(i, abandoned_f2, abandoned_f3);
+        //         for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+        //             [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+        //             PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+        //         }
+        //         // points.push([i*discretFi, abandoned_f2*discretFi, abandoned_f3*discretFi]);
+        //     }
+        // }
     }
     console.log('OK');
+    // console.log(points);
+    // setInterval(tick, 100)
+    // let ind = 0;
+    // function tick() {
+    //     clear();
+    //     [foo, bar, baz] = points[ind];
+    //     make(foo, bar, baz);
+    //     ind += 1;
+    // }
+}
+
+// fi в градусах.
+function toNew(x, y, fiLocal) {
+    return [
+        x*Math.cos(degToRads(fiLocal)) - y*Math.sin(degToRads(fiLocal)) + l,
+        x*Math.sin(degToRads(fiLocal)) + y*Math.cos(degToRads(fiLocal))
+        ];
 }
 
 function makeProjection() {
@@ -388,4 +464,68 @@ function makeProjection() {
             }
         }
     }
+}
+
+
+function makePointValid(array) {
+    let result = [];
+    for (let i = 0; i < array.length; i++) {
+        if (array[i] === 360 / discretFi) {
+            result[i] = 0;
+        } else if (array[i] === -1) {
+            result[i] = 360 / discretFi - 1;
+        } else {
+            result[i] = array[i];
+        }
+    }
+    return result;
+}
+
+function neighbors6(df1, df2, df3) {
+    return [
+        makePointValid([df1 + 1, df2, df3]),
+        makePointValid([df1 - 1, df2, df3]),
+        makePointValid([df1, df2 + 1, df3]),
+        makePointValid([df1, df2 - 1, df3]),
+        makePointValid([df1, df2, df3 + 1]),
+        makePointValid([df1, df2, df3 - 1])
+    ];
+}
+
+function neighbors26(df1, df2, df3) {
+    return [
+        // центры - 6
+        makePointValid([df1 + 1, df2, df3]),
+        makePointValid([df1 - 1, df2, df3]),
+        makePointValid([df1, df2 + 1, df3]),
+        makePointValid([df1, df2 - 1, df3]),
+        makePointValid([df1, df2, df3 + 1]),
+        makePointValid([df1, df2, df3 - 1]),
+        // ребра - 12
+        makePointValid([df1 + 1, df2 + 1, df3]),
+        makePointValid([df1 - 1, df2 - 1, df3]),
+        makePointValid([df1, df2 + 1, df3 + 1]),
+        makePointValid([df1, df2 - 1, df3 - 1]),
+        makePointValid([df1 + 1, df2, df3 + 1]),
+        makePointValid([df1 - 1, df2, df3 - 1]),
+        makePointValid([df1 + 1, df2 - 1, df3]),
+        makePointValid([df1 - 1, df2 + 1, df3]),
+        makePointValid([df1, df2 + 1, df3 - 1]),
+        makePointValid([df1, df2 - 1, df3 + 1]),
+        makePointValid([df1 + 1, df2, df3 - 1]),
+        makePointValid([df1 - 1, df2, df3 + 1]),
+        // углы - 8
+        makePointValid([df1 + 1, df2 + 1, df3 + 1]),
+        makePointValid([df1 + 1, df2 + 1, df3 - 1]),
+        makePointValid([df1 + 1, df2 - 1, df3 + 1]),
+        makePointValid([df1 - 1, df2 + 1, df3 + 1]),
+        makePointValid([df1 - 1, df2 - 1, df3 - 1]),
+        makePointValid([df1 - 1, df2 - 1, df3 + 1]),
+        makePointValid([df1 - 1, df2 + 1, df3 - 1]),
+        makePointValid([df1 + 1, df2 - 1, df3 - 1])
+    ];
+}
+
+function getWayByWaveAlgorithm() {
+    // скоро...
 }
