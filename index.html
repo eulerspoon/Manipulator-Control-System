@@ -19,11 +19,13 @@
     </container>
     
     <container class = "buttonsAndMore">
-        <button class = "startPosButton" onclick="fixStartPos()" style = "width: 100px; height: 50px;">Стартовое положение</button>
+        <button class = "startPosButton" onclick="fixStartPos()" style = "width: 100px; height: 50px;">Начальное положение</button>
 
         <button class = "finPosButton" onclick="fixFinPos()" style = "width: 100px; height: 50px;">Конечное положение</button>
 
         <button class = "fixObstacles" onclick="handleObstacles()" style = "width: 100px; height: 50px;">Обработать препятствия</button>
+
+        <button class = "getWay" onclick="getWayByWaveAlgorithm()" style = "width: 100px; height: 50px;">Найти путь</button>
 
         <select id = 'fixParameter'> 
             <option> fi1 </option>
