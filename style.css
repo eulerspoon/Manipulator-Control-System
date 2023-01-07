@@ -48,6 +48,13 @@ container {
     background-color: gray;
     color: white;
 }
+.startWave {
+    margin-left: 10px;
+}
+.startWave:hover {
+    background-color: green;
+    color: white;
+}
 
 #fixParameter {
     margin-left: 10px;
