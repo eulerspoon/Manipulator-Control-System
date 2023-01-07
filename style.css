@@ -3,16 +3,17 @@
     margin: 0px;
 }
 #canvas2 {
+    outline: 1px solid black;
     position: relative;
-    bottom: 120px;
-    left: 120px;
 }
 
 container {
     display: flex;
     flex-direction: row;
+    justify-content: center;
     margin: 0px;
     margin-top: 10px;
+    position: relative;
 }
 
 .slider {
@@ -53,6 +54,14 @@ container {
 }
 .startWave:hover {
     background-color: green;
+    color: white;
+}
+
+.getWay {
+    margin-left: 10px;
+}
+.getWay:hover {
+    background-color: black;
     color: white;
 }
 
