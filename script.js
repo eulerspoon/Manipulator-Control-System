@@ -1,9 +1,9 @@
-// canvas2 для прорисовки проекций плоскостей (!!!)
+// canvas2 для прорисовки проекций плоскостей (!!!) и графика.
 const canvas2 = document.getElementById('canvas2');
 const ctx2 = canvas2.getContext('2d');
 
-canvas2.width = 360;
-canvas2.height = 360;
+canvas2.width = 600;
+canvas2.height = 600;
 
 // выбор параметра
 const menu = document.getElementById('fixParameter');
@@ -26,11 +26,16 @@ let obstacles = [];
 // дискрет препятствия в рабочей зоне
 let discret = 4;
 // дискрет угла
-let discretFi = 1;
+let discretFi = 2;
 
 document.getElementById('f1').step = discretFi;
+document.getElementById('f1').max = 360 - discretFi;
+
 document.getElementById('f2').step = discretFi;
+document.getElementById('f1').max = 360 - discretFi;
+
 document.getElementById('f3').step = discretFi;
+document.getElementById('f1').max = 360 - discretFi;
 
 let f1 = 0;
 let f2 = 180;
@@ -80,6 +85,14 @@ for (let i = 0; i < 360 / discretFi; i++) {
 }
 
 make(f1, f2, f3);
+
+ctx2.strokeStyle = "black";
+ctx2.lineWidth = 5;
+ctx2.moveTo(0, 200);
+ctx2.lineTo(600, 200);
+ctx2.moveTo(0, 400);
+ctx2.lineTo(600, 400);
+ctx2.stroke();
 
 function comparePairs(p1, p2) {
     return (p1[0] === p2[0]) && (p1[1] === p2[1]);
@@ -444,22 +457,22 @@ function handleObstacles() {
                     PS[abandoned][i][j] = 1;
                     // points.push([abandoned*discretFi, i*discretFi, j*discretFi]);
 
-                    // расширение (оно не нужно !!!)
-                    // neighs = neighbors26(abandoned, i, j);
-                    // for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
-                    //     [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
-                    //     PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
-                    // }
+                    // расширение
+                    neighs = neighbors6(abandoned, i, j);
+                    for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                        [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                        PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                    }
                 }
             }
         }
         // все касания второго звена
-        lxCounter = 0;
-        for (let lx = (r < l) ? l - r : r - l; lx <= l; lx += 0.125) {
-            lxCounter++;
-            if (lxCounter < 10) {
-                for (let intermediateLx = lx; intermediateLx < lx + 0.125; intermediateLx += 0.01) {
-                    for (let i = 0; i < 360 / discretFi; i++) {
+        for (let i = 0; i < 360 / discretFi; i++) {
+            lxCounter = 0;
+            for (let lx = (r < l) ? l - r : r - l; lx <= l; lx += 0.125) {
+                lxCounter++;
+                if (lxCounter < 10) {
+                    for (let intermediateLx = lx; intermediateLx < lx + 0.125; intermediateLx += 0.01) {
                         abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(Number(((l**2 + r**2 - intermediateLx**2) / (2 * l * r)).toFixed(10)))) + 360);
                         abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1
 
@@ -496,9 +509,7 @@ function handleObstacles() {
                         }
 
                     }
-                }
-            } else {
-                for (let i = 0; i < 360 / discretFi; i++) {
+                } else {
                     abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(Number(((l**2 + r**2 - lx**2) / (2 * l * r)).toFixed(10)))) + 360);
                     abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1
 
@@ -507,20 +518,11 @@ function handleObstacles() {
 
                     PS[abandoned_f1][abandoned_f2][i] = 1;
                     // расширение
-                    // neighs = neighbors6(abandoned_f1, abandoned_f2, i);
-                    // for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
-                    //     [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
-                    //     PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
-                    // }
-
-                    // if (lxCounter <= (l - Math.trunc(((r < l) ? l - r : r - l)) / 4)) {
-                        // PS[abandoned_f1][abandoned_f2 + 1][i] = 1;
-                        // PS[abandoned_f1][abandoned_f2 - 1][i] = 1;
-                        // PS[abandoned_f1][abandoned_f2 + 2][i] = 1;
-                        // PS[abandoned_f1][abandoned_f2 - 2][i] = 1;
-                        // PS[abandoned_f1][abandoned_f2 + 3][i] = 1;
-                        // PS[abandoned_f1][abandoned_f2 - 3][i] = 1;
-                    // }
+                        neighs = neighbors6(abandoned_f1, abandoned_f2, i);
+                        for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                            [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                            PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                        }
 
                     // points.push([abandoned_f1*discretFi, abandoned_f2*discretFi, i*discretFi]);
 
@@ -532,20 +534,12 @@ function handleObstacles() {
 
                     PS[abandoned_f1][abandoned_f2][i] = 1;
                     // расширение
-                    // neighs = neighbors6(abandoned_f1, abandoned_f2, i);
-                    // for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
-                    //     [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
-                    //     PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
-                    // }
+                    neighs = neighbors6(abandoned_f1, abandoned_f2, i);
+                    for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                        [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                        PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                    }
 
-                    // if (lxCounter <= (l - Math.trunc(((r < l) ? l - r : r - l)) / 4)) {
-                    //     PS[abandoned_f1][abandoned_f2 + 1][i] = 1;
-                    //     PS[abandoned_f1][abandoned_f2 - 1][i] = 1;
-                    //     PS[abandoned_f1][abandoned_f2 + 2][i] = 1;
-                    //     PS[abandoned_f1][abandoned_f2 - 2][i] = 1;
-                    //     PS[abandoned_f1][abandoned_f2 + 3][i] = 1;
-                    //     PS[abandoned_f1][abandoned_f2 - 3][i] = 1;
-                    // }
                     // points.push([abandoned_f1*discretFi, abandoned_f2*discretFi, i*discretFi]);
                 }
             }
@@ -556,6 +550,7 @@ function handleObstacles() {
             [newX, newY] = toNew(cur[0], cur[1], i*discretFi);
             newR = dist(0, 0, newX, newY);
             newFi = radToDegs(fiPrepInRads(newX, newY));
+            lxCounter = 0;  
             for (let lx = (newR <= l) ? l - newR: newR - l; lx <= l; lx += 0.125) {
                 lxCounter++;
                 if (lxCounter < 10) {
@@ -569,12 +564,23 @@ function handleObstacles() {
                         if (PS[i][abandoned_f2][abandoned_f3] === 0) {
                             PS[i][abandoned_f2][abandoned_f3] = 1;
 
-                            // PS[i][abandoned_f2][abandoned_f3 + 1] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 - 1] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 + 2] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 - 2] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 + 3] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 - 3] = 1;
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 2]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 2]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 3]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 3]);
+                            PS[newAban1][newAban2][newAban3] = 1;
                         }
 
                         abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) + Math.acos(Number(((l**2 + newR**2 - intermediateLx**2) / (2*l*newR)).toFixed(10)))));
@@ -587,12 +593,23 @@ function handleObstacles() {
 
                             PS[i][abandoned_f2][abandoned_f3] = 1;
 
-                            PS[i][abandoned_f2][abandoned_f3 + 1] = 1;
-                            PS[i][abandoned_f2][abandoned_f3 - 1] = 1;
-                            PS[i][abandoned_f2][abandoned_f3 + 2] = 1;
-                            PS[i][abandoned_f2][abandoned_f3 - 2] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 + 3] = 1;
-                            // PS[i][abandoned_f2][abandoned_f3 - 3] = 1;
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 2]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 2]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 3]);
+                            PS[newAban1][newAban2][newAban3] = 1;
+
+                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 3]);
+                            PS[newAban1][newAban2][newAban3] = 1;
                         }
                     }
                 } else {
@@ -606,19 +623,11 @@ function handleObstacles() {
                     PS[i][abandoned_f2][abandoned_f3] = 1;
 
                     // расширение
-                    // neighs = neighbors6(i, abandoned_f2, abandoned_f3);
-                    // for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
-                    //     [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
-                    //     PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
-                    // }
-                    // if (lxCounter <= (l - Math.trunc(((r < l) ? l - r : r - l)) / 4)) {
-                    //     PS[i][abandoned_f2][abandoned_f3 + 1] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 - 1] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 + 2] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 - 2] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 + 3] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 - 3] = 1;
-                    // }
+                    neighs = neighbors6(i, abandoned_f2, abandoned_f3);
+                    for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                        [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                        PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                    }
 
                     // points.push([i*discretFi, abandoned_f2*discretFi, abandoned_f3*discretFi]);
 
@@ -631,20 +640,11 @@ function handleObstacles() {
                     PS[i][abandoned_f2][abandoned_f3] = 1;
 
                     // расширение
-                    // neighs = neighbors6(i, abandoned_f2, abandoned_f3);
-                    // for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
-                    //     [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
-                    //     PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
-                    // }
-                    
-                    // if (lxCounter <= (l - Math.trunc(((r < l) ? l - r : r - l)) / 4)) {
-                    //     PS[i][abandoned_f2][abandoned_f3 + 1] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 - 1] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 + 2] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 - 2] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 + 3] = 1;
-                    //     PS[i][abandoned_f2][abandoned_f3 - 3] = 1;
-                    // }
+                    neighs = neighbors6(i, abandoned_f2, abandoned_f3);
+                    for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                        [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                        PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                    }
                     
                     // points.push([i*discretFi, abandoned_f2*discretFi, abandoned_f3*discretFi]);
                 }
@@ -652,7 +652,6 @@ function handleObstacles() {
         }
     }
     console.log('OK');
-    getWayByWaveAlgorithm();
     // console.log(points);
     // setInterval(tick, 100)
     // let ind = 0;
@@ -673,7 +672,7 @@ function toNew(x, y, fiLocal) {
 }
 
 function makeProjection() {
-    ctx2.clearRect(0, 0, 720, 720);
+    ctx2.clearRect(0, 0, 600, 600);
     let fixed = document.getElementById('fixParameter').value;
     if (fixed === 'fi1') {
         let value = document.getElementById('valueInput').value;
@@ -685,6 +684,9 @@ function makeProjection() {
                     ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
                 } else if ((PS[current_discret === 360 / discretFi ? 0 : current_discret][i][j]) === 0){
                     ctx2.fillStyle = "gray";
+                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                } else {
+                    ctx2.fillStyle = "green";
                     ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
                 }
             }
@@ -699,6 +701,9 @@ function makeProjection() {
                 } else if ((PS[i][fiToDiscret(value)][j]) === 0){
                     ctx2.fillStyle = "gray";
                     ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                } else {
+                    ctx2.fillStyle = "green";
+                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
                 }
             }
         }
@@ -711,6 +716,9 @@ function makeProjection() {
                     ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
                 } else if ((PS[i][j][fiToDiscret(value)]) === 0){
                     ctx2.fillStyle = "gray";
+                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                } else {
+                    ctx2.fillStyle = "green";
                     ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
                 }
             }
@@ -779,6 +787,11 @@ function neighbors26(df1, df2, df3) {
 }
 
 function getWayByWaveAlgorithm() {
+    if (!startPosIsFixed || !finPosIsFixed) {
+        console.log('Не задано начальное или конечное положение!');
+        return;
+    }
+
     way = [];
     for (let i = 0; i < 360 / discretFi; i++) {
         for (let j = 0; j < 360 / discretFi; j++) {
@@ -791,7 +804,6 @@ function getWayByWaveAlgorithm() {
             }
         }
     }
-    console.log('FRONTS заполнен');
 
     let df1start = f1start / discretFi;
     let df2start = f2start / discretFi;
@@ -821,10 +833,16 @@ function getWayByWaveAlgorithm() {
                 }
             }
         }
-        front = newFront;
-        waveNumber++;
+        if (newFront.length > 0) {
+            front = newFront;
+            waveNumber++;
+        } else {
+            console.log('Пути нет!');
+            return;
+        }
+        
     }
-    console.log('Фронты расставлены! Ура!');
+    console.log('Фронты расставлены...');
 
     neighs = neighbors6(df1start, df2start, df3start);
     while (waveNumber >= 0) {
@@ -832,6 +850,7 @@ function getWayByWaveAlgorithm() {
             [neif1, neif2, neif3] = neighs[neighborIndex];
             if (FRONTS[neif1][neif2][neif3] === waveNumber - 1) {
                 way.push([neif1, neif2, neif3]);
+                PS[neif1][neif2][neif3] = 'way_part';
                 neighs = neighbors6(neif1, neif2, neif3);
                 break;
             }
@@ -842,21 +861,87 @@ function getWayByWaveAlgorithm() {
 }
 
 function start() {
-    let ind = 0;
-    // getWayByWaveAlgorithm();
     if (startPosIsFixed && finPosIsFixed) {
+        let ind = 0;
+
+        ctx2.clearRect(0, 0, 600, 600);
+        ctx2.strokeStyle = "black";
+        ctx2.lineWidth = 2;
+        ctx2.moveTo(0, 200);
+        ctx2.lineTo(600, 200);
+        ctx2.moveTo(0, 400);
+        ctx2.lineTo(600, 400);
+        ctx2.stroke();
+
+        let deltaX = 600 / way.length;
+        let deltaY = 200 / 360;
+
+        let currentX = deltaX / 2;
+
+        let f1traj = [];
+        let f2traj = [];
+        let f3traj = [];
+
+        // let f3GraphCoords = [];
+        // let f2GraphCoords = [];
+        // let f1GraphCoords = [];
+
+        for (let i = 0; i < way.length; i++) {
+            f1traj.push(way[i][0] * discretFi);
+            f2traj.push(way[i][1] * discretFi);
+            f3traj.push(way[i][2] * discretFi);
+        }
+
         let interval = setInterval( function tick() {
             if (ind < way.length) {
                 clear();
                 make(way[ind][0]*discretFi, way[ind][1]*discretFi, way[ind][2]*discretFi);
-                console.log(way[ind][0]*discretFi, way[ind][1]*discretFi, way[ind][2]*discretFi);
+                ctx2.fillStyle = "black";
+                ctx2.strokeStyle = "black";
+                // ctx2.beginPath();
+                // ctx2.arc(currentX, 600 - f1traj[ind] * deltaY, 3, 0, Math.PI * 2, false);
+                // ctx2.fill();
+                // ctx2.closePath();
+
+                ctx2.beginPath();
+                ctx2.moveTo(currentX, 600 - f1traj[ind] * deltaY);
+                ctx2.lineTo(currentX + deltaX, 600 - f1traj[ind + 1] * deltaY);
+                ctx2.stroke();
+                ctx2.closePath();
+
+                ctx2.fillStyle = "green";
+                ctx2.strokeStyle = "green";
+                // ctx2.beginPath();
+                // ctx2.arc(currentX, 400 - f2traj[ind] * deltaY, 3, 0, Math.PI * 2, false);
+                // ctx2.fill();
+                // ctx2.closePath();
+
+                ctx2.beginPath();
+                ctx2.moveTo(currentX, 400 - f2traj[ind] * deltaY);
+                ctx2.lineTo(currentX + deltaX, 400 - f2traj[ind + 1] * deltaY);
+                ctx2.stroke();
+                ctx2.closePath();
+
+                ctx2.fillStyle = "purple";
+                ctx2.strokeStyle = "purple";
+                // ctx2.beginPath();
+                // ctx2.arc(currentX, 200 - f3traj[ind] * deltaY, 3, 0, Math.PI * 2, false);
+                // ctx2.fill();
+                // ctx2.closePath();
+
+                ctx2.beginPath();
+                ctx2.moveTo(currentX, 200 - f3traj[ind] * deltaY);
+                ctx2.lineTo(currentX + deltaX, 200 - f3traj[ind + 1] * deltaY);
+                ctx2.stroke();
+                ctx2.closePath();
+                
+                currentX += deltaX;
                 ind++;
             } else {
                 clearInterval(interval);
             }
-        }, 100);
+        }, 25);
     } else {
         console.log('Не поехали.');
-    }
-    
+    }   
 }
