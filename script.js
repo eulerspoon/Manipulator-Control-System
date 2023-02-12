@@ -1,3 +1,4 @@
+
 // canvas2 для прорисовки проекций плоскостей (!!!) и графика.
 const canvas2 = document.getElementById('canvas2');
 const ctx2 = canvas2.getContext('2d');
@@ -26,16 +27,22 @@ let obstacles = [];
 // дискрет препятствия в рабочей зоне
 let discret = 4;
 // дискрет угла
-let discretFi = 2;
+let discretFi = 1;
+
+let handled = [];
+
+
+// это база.
+let DATA = {};
 
 document.getElementById('f1').step = discretFi;
 document.getElementById('f1').max = 360 - discretFi;
 
 document.getElementById('f2').step = discretFi;
-document.getElementById('f1').max = 360 - discretFi;
+document.getElementById('f2').max = 360 - discretFi;
 
 document.getElementById('f3').step = discretFi;
-document.getElementById('f1').max = 360 - discretFi;
+document.getElementById('f3').max = 360 - discretFi;
 
 let f1 = 0;
 let f2 = 180;
@@ -47,16 +54,19 @@ let PS = [];
 // фронты
 let FRONTS = [];
 
-// do you know it?
+// путь
 let way = [];
 
 let startPosIsFixed = false;
 let finPosIsFixed = false;
 
+// true - ввод, false - удаление
+let obstacleStatus = true;
+
 // длина звеньев
 const l = 100;
 
-// координаты начальной точки
+// координаты центра
 const x0 = 300;
 const y0 = 300;
 
@@ -71,6 +81,7 @@ for (let i = 0; i < 360 / discretFi; i++) {
             PS[i][j].push(0);
             FRONTS[i][j].push(0);
             // с запретом пересечения 1 и 3 звеньев
+
             // if ((j*discretFi > 270) && (k*discretFi > 900 - 2*j*discretFi)) {
             //     PS[i][j].push(1);
             // } else {
@@ -86,13 +97,90 @@ for (let i = 0; i < 360 / discretFi; i++) {
 
 make(f1, f2, f3);
 
-ctx2.strokeStyle = "black";
-ctx2.lineWidth = 5;
-ctx2.moveTo(0, 200);
-ctx2.lineTo(600, 200);
-ctx2.moveTo(0, 400);
-ctx2.lineTo(600, 400);
-ctx2.stroke();
+function clear2() {
+
+    ctx2.beginPath();
+    ctx2.strokeStyle = "black";
+    ctx2.fillStyle = "black";
+    ctx2.lineWidth = 5;
+    ctx2.moveTo(0, 200);
+    ctx2.lineTo(600, 200);
+    ctx2.moveTo(0, 400);
+    ctx2.lineTo(600, 400);
+    ctx2.closePath();
+    ctx2.stroke();
+
+    ctx2.moveTo(0, 600);
+    ctx2.lineTo(600, 600);
+    ctx2.stroke();
+
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(0, 0);
+    ctx2.lineTo(0, 600);
+    ctx2.stroke();
+
+    // подпись осей и стрЭлочки
+    ctx2.lineWidth = 1;
+
+    ctx2.font = "30px Calibri";
+    ctx2.fillText("ϕ", 15, 30);
+    ctx2.font = "15px Calibri";
+    ctx2.fillText("3", 35, 30);
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(0, 0);
+    ctx2.lineTo(10, 30);
+    ctx2.stroke();
+
+    ctx2.font = "30px Calibri";
+    ctx2.fillText("ϕ", 15, 200 + 30);
+    ctx2.font = "15px Calibri";
+    ctx2.fillText("2", 35, 200 + 30);
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(0, 0 + 200);
+    ctx2.lineTo(10, 30 + 200);
+    ctx2.stroke();
+
+    ctx2.font = "30px Calibri";
+    ctx2.fillText("ϕ", 15, 200 + 30 + 200);
+    ctx2.font = "15px Calibri";
+    ctx2.fillText("1", 35, 200 + 30 + 200);
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(0, 0 + 200 + 200);
+    ctx2.lineTo(10, 30 + 200 + 200);
+    ctx2.stroke();
+
+    ctx2.font = "30px Calibri";
+    ctx2.fillText("t", 580, 180);
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(600, 200);
+    ctx2.lineTo(600 - 30, 200 - 10);
+    ctx2.moveTo(600, 200);
+    ctx2.lineTo(600 - 30, 200 + 10);
+    ctx2.stroke();
+    ctx2.lineWidth = 1;
+
+    ctx2.font = "30px Calibri";
+    ctx2.fillText("t", 580, 200 + 180);
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(600, 400);
+    ctx2.lineTo(600 - 30, 400 - 10);
+    ctx2.moveTo(600, 400);
+    ctx2.lineTo(600 - 30, 400 + 10);
+    ctx2.stroke();
+    ctx2.lineWidth = 1;
+
+    ctx2.font = "30px Calibri";
+    ctx2.fillText("t", 580, 200 + 200 + 180);
+    ctx2.lineWidth = 2;
+    ctx2.moveTo(600, 600);
+    ctx2.lineTo(600 - 30, 600 - 10);
+    ctx2.stroke();
+    ctx2.lineWidth = 1;
+
+    // ctx2.lineWidth = 2;
+}
+
+clear2();
 
 function comparePairs(p1, p2) {
     return (p1[0] === p2[0]) && (p1[1] === p2[1]);
@@ -113,6 +201,18 @@ function contains(arr, el) {
 
 function compareTriples(t1, t2) {
     return (t1[0] === t2[0]) && (t1[1] === t2[1]) && (t1[2] === t2[2]);
+}
+
+function remove(array, element) {
+    for (let i = 0; i < array.length; i++) {
+        if (compareArrays(array[i], element)) {
+            array.splice(i, 1);
+        }
+    }
+}
+
+function compareArrays(a, b) {
+    return (JSON.stringify(a) === JSON.stringify(b));
 }
 
 function contains3(arr, triple) {
@@ -245,7 +345,7 @@ function make(fi1Degs, fi2Degs, fi3Degs) {
     ctx.lineTo(x1, y1);
     ctx.closePath();
     ctx.stroke();
-    ctx.arc(x0, y0, 5, 0, Math.PI*2, false);
+    ctx.arc(x0, y0, 4, 0, Math.PI*2, false);
     ctx.fill();
 
     ctx.strokeStyle = "green";
@@ -255,7 +355,7 @@ function make(fi1Degs, fi2Degs, fi3Degs) {
     ctx.lineTo(x2, y2);
     ctx.closePath();
     ctx.stroke();
-    ctx.arc(x1, y1, 5, 0, Math.PI*2, false);
+    ctx.arc(x1, y1, 4, 0, Math.PI*2, false);
     ctx.fill();
 
     ctx.strokeStyle = "purple";
@@ -265,7 +365,7 @@ function make(fi1Degs, fi2Degs, fi3Degs) {
     ctx.lineTo(x3, y3);
     ctx.closePath();
     ctx.stroke();
-    ctx.arc(x2, y2, 5, 0, Math.PI*2, false);
+    ctx.arc(x2, y2, 4, 0, Math.PI*2, false);
     ctx.fill();
 }
 
@@ -371,7 +471,7 @@ function clear() {
     }
     if (obstacles.length > 0) {
         ctx.fillStyle = "red";
-        for (let i = 0; i < obstacles.length; i++) {
+        for (let i = 0; i < obstacles.length; i += 5) {
             current = basedToScreen(obstacles[i][0], obstacles[i][1]);
             ctx.fillRect(current[0] - discret / 2, current[1] - discret / 2, discret, discret);
         }
@@ -380,24 +480,23 @@ function clear() {
 
 }
 
-canvas.onmousedown = function addObstacle(e) {
-    d_coords = discretCoords(e.offsetX, e.offsetY);
-
-    centerScreenCoords = [d_coords[0]*discret + (discret / 2), d_coords[1]*discret + (discret / 2)];
-
-    ctx.fillStyle = "red";
-    ctx.fillRect(d_coords[0]*discret, d_coords[1]*discret, discret, discret);
-    ctx.fillStyle = "black";
-
-    newCoords = screenToBased(centerScreenCoords[0], centerScreenCoords[1]);
-
-    if (!(contains(obstacles, newCoords))) {
-        obstacles.push(newCoords)
-    }
+function сhangeObstacleStatus() {
+    obstacleStatus = !obstacleStatus;
+    handled = [];
 }
 
-canvas.onmousemove = function drawIfPressed (e) {
-    if (e.buttons > 0) {
+function arccosArg(num) {
+    if (num >= 1){
+        return 1;
+    }
+    if (num <= -1) {
+        return -1;
+    }
+    return num;
+}
+
+canvas.onmousedown = function addObstacle(e) {
+    if (obstacleStatus) {
         d_coords = discretCoords(e.offsetX, e.offsetY);
 
         centerScreenCoords = [d_coords[0]*discret + (discret / 2), d_coords[1]*discret + (discret / 2)];
@@ -409,7 +508,61 @@ canvas.onmousemove = function drawIfPressed (e) {
         newCoords = screenToBased(centerScreenCoords[0], centerScreenCoords[1]);
 
         if (!(contains(obstacles, newCoords))) {
-            obstacles.push(newCoords)
+            obstacles.push(newCoords);
+            obstacles.push([newCoords[0] + discret / 2, newCoords[1] + discret / 2]);
+            obstacles.push([newCoords[0] + discret / 2, newCoords[1] - discret / 2]);
+            obstacles.push([newCoords[0] - discret / 2, newCoords[1] + discret / 2]);
+            obstacles.push([newCoords[0] - discret / 2, newCoords[1] - discret / 2]);
+        }
+    } else {
+        d_coords = discretCoords(e.offsetX, e.offsetY);
+
+        centerScreenCoords = [d_coords[0]*discret + (discret / 2), d_coords[1]*discret + (discret / 2)];
+
+        newCoords = screenToBased(centerScreenCoords[0], centerScreenCoords[1]);
+
+        if (contains(obstacles, newCoords)) {
+            remove(obstacles, newCoords);
+            ctx.fillStyle = "white";
+            ctx.fillRect(d_coords[0]*discret, d_coords[1]*discret, discret, discret);
+            ctx.fillStyle = "black";
+        }
+    }
+}
+
+canvas.onmousemove = function drawIfPressed (e) {
+    if (e.buttons > 0) {
+        if (obstacleStatus) {
+            d_coords = discretCoords(e.offsetX, e.offsetY);
+
+            centerScreenCoords = [d_coords[0]*discret + (discret / 2), d_coords[1]*discret + (discret / 2)];
+
+            ctx.fillStyle = "red";
+            ctx.fillRect(d_coords[0]*discret, d_coords[1]*discret, discret, discret);
+            ctx.fillStyle = "black";
+
+            newCoords = screenToBased(centerScreenCoords[0], centerScreenCoords[1]);
+
+            if (!(contains(obstacles, newCoords))) {
+                obstacles.push(newCoords);
+                obstacles.push([newCoords[0] + discret / 2, newCoords[1] + discret / 2]);
+                obstacles.push([newCoords[0] + discret / 2, newCoords[1] - discret / 2]);
+                obstacles.push([newCoords[0] - discret / 2, newCoords[1] + discret / 2]);
+                obstacles.push([newCoords[0] - discret / 2, newCoords[1] - discret / 2]);
+            }
+        } else {
+            d_coords = discretCoords(e.offsetX, e.offsetY);
+
+            centerScreenCoords = [d_coords[0]*discret + (discret / 2), d_coords[1]*discret + (discret / 2)];
+
+            newCoords = screenToBased(centerScreenCoords[0], centerScreenCoords[1]);
+
+            if (contains(obstacles, newCoords)) {
+                remove(obstacles, newCoords);
+                ctx.fillStyle = "white";
+                ctx.fillRect(d_coords[0]*discret, d_coords[1]*discret, discret, discret);
+                ctx.fillStyle = "black";
+            }
         }
     }
 }
@@ -418,6 +571,9 @@ function fixStartPos() {
     f1start = get_f1();
     f2start = get_f2();
     f3start = get_f3();
+    clear();
+    makeGray(f1start, f2start, f3start);
+    make(f1start, f2start, f3start);
     startPosIsFixed = true;
 }
 
@@ -425,6 +581,9 @@ function fixFinPos() {
     f1fin = get_f1();
     f2fin = get_f2();
     f3fin = get_f3();
+    clear();
+    makeGreen(f1fin, f2fin, f3fin);
+    make(f1fin, f2fin, f3fin);
     finPosIsFixed = true;
 }
 
@@ -440,6 +599,9 @@ function handleObstacles() {
     points = [];
     let lxCounter = 0;
     for (let obstacleIndex = 0; obstacleIndex < obstacles.length; obstacleIndex++) {
+        if (contains(handled, obstacles[obstacleIndex])) { continue }
+
+        handled.push(obstacles[obstacleIndex]);
 
         cur = obstacles[obstacleIndex];
         r = dist(0, 0, cur[0], cur[1]);
@@ -455,7 +617,6 @@ function handleObstacles() {
                         abandoned = 0;
                     }
                     PS[abandoned][i][j] = 1;
-                    // points.push([abandoned*discretFi, i*discretFi, j*discretFi]);
 
                     // расширение
                     neighs = neighbors6(abandoned, i, j);
@@ -466,21 +627,34 @@ function handleObstacles() {
                 }
             }
         }
+
         // все касания второго звена
         for (let i = 0; i < 360 / discretFi; i++) {
             lxCounter = 0;
-            for (let lx = (r < l) ? l - r : r - l; lx <= l; lx += 0.125) {
+            for (let lx = (r < l) ? l - r + 0.000001: r - l + 0.00001; lx <= l; lx += 0.125) {
                 lxCounter++;
                 if (lxCounter < 10) {
                     for (let intermediateLx = lx; intermediateLx < lx + 0.125; intermediateLx += 0.01) {
-                        abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(Number(((l**2 + r**2 - intermediateLx**2) / (2 * l * r)).toFixed(10)))) + 360);
+                        abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(arccosArg(Number(((l**2 + r**2 - intermediateLx**2) / (2 * l * r)))))) + 360);
                         abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1
 
-                        abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(Number(((l**2 + intermediateLx**2 - r**2) / (2*l*intermediateLx)).toFixed(10)))) + 360);
+                        abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(arccosArg(Number(((l**2 + intermediateLx**2 - r**2) / (2*l*intermediateLx)).toFixed(5))))) + 360);
                         abandoned_f2 = (abandoned_f2 === 360 / discretFi) ? 0 : abandoned_f2;
-
+                        // try {
+                        //     PS[abandoned_f1][abandoned_f2][i];
+                        // } catch {
+                        //     console.log();
+                        //     continue;
+                        // }
                         if (PS[abandoned_f1][abandoned_f2][i] === 0) {
+
                             PS[abandoned_f1][abandoned_f2][i] = 1;
+
+                            neighs = neighbors6(abandoned_f1, abandoned_f2, i);
+                            for (let neighborIndex = 0; neighborIndex < neighs.length; neighborIndex++) {
+                                [abandoned_f1, abandoned_f2, abandoned_f3] = neighs[neighborIndex];
+                                PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+                            }
 
                             // PS[abandoned_f1][abandoned_f2 + 1][i] = 1;
                             // PS[abandoned_f1][abandoned_f2 - 1][i] = 1;
@@ -491,11 +665,17 @@ function handleObstacles() {
                         }
 
 
-                        abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos(Number(((l**2 + r**2 - intermediateLx**2) / (2*l*r)).toFixed(10)))));
+                        abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos(arccosArg(Number(((l**2 + r**2 - intermediateLx**2) / (2*l*r)))))));
                         abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1;
 
-                        abandoned_f2 = fiToDiscret(radToDegs(Math.acos(Number(((l**2 + intermediateLx**2 - r**2) / (2*l*intermediateLx)).toFixed(10)))));
+                        abandoned_f2 = fiToDiscret(radToDegs(Math.acos(arccosArg(Number(((l**2 + intermediateLx**2 - r**2) / (2*l*intermediateLx)))))));
                         abandoned_f2 = (abandoned_f2 === 360 / discretFi) ? 0 : abandoned_f2;
+
+                        // try {
+                        //     PS[abandoned_f1][abandoned_f2][i];
+                        // } catch {
+                        //     continue;
+                        // }
 
                         if (PS[abandoned_f1][abandoned_f2][i] === 0) {
                             PS[abandoned_f1][abandoned_f2][i] = 1;
@@ -510,11 +690,17 @@ function handleObstacles() {
 
                     }
                 } else {
-                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(Number(((l**2 + r**2 - lx**2) / (2 * l * r)).toFixed(10)))) + 360);
+                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) - Math.acos(arccosArg(Number(((l**2 + r**2 - lx**2) / (2 * l * r)))))) + 360);
                     abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1
 
-                    abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(Number(((l**2 + lx**2 - r**2) / (2*l*lx)).toFixed(10)))) + 360);
+                    abandoned_f2 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(arccosArg(Number(((l**2 + lx**2 - r**2) / (2*l*lx)))))) + 360);
                     abandoned_f2 = (abandoned_f2 === 360 / discretFi) ? 0 : abandoned_f2;
+
+                    // try {
+                    //     PS[abandoned_f1][abandoned_f2][i]
+                    // } catch {
+                    //     continue;
+                    // }
 
                     PS[abandoned_f1][abandoned_f2][i] = 1;
                     // расширение
@@ -526,11 +712,17 @@ function handleObstacles() {
 
                     // points.push([abandoned_f1*discretFi, abandoned_f2*discretFi, i*discretFi]);
 
-                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos(Number(((l**2 + r**2 - lx**2) / (2*l*r)).toFixed(10)))));
+                    abandoned_f1 = fiToDiscret(radToDegs(degToRads(fi) + Math.acos(arccosArg(Number(((l**2 + r**2 - lx**2) / (2*l*r)))))));
                     abandoned_f1 = (abandoned_f1 === 360 / discretFi) ? 0 : abandoned_f1;
 
-                    abandoned_f2 = fiToDiscret(radToDegs(Math.acos(Number(((l**2 + lx**2 - r**2) / (2*l*lx)).toFixed(10)))));
+                    abandoned_f2 = fiToDiscret(radToDegs(Math.acos(arccosArg(Number(((l**2 + lx**2 - r**2) / (2*l*lx)).toFixed(5))))));
                     abandoned_f2 = (abandoned_f2 === 360 / discretFi) ? 0 : abandoned_f2;
+
+                    // try {
+                    //     PS[abandoned_f1][abandoned_f2][i]
+                    // } catch {
+                        // continue;
+                    // }
 
                     PS[abandoned_f1][abandoned_f2][i] = 1;
                     // расширение
@@ -551,24 +743,24 @@ function handleObstacles() {
             newR = dist(0, 0, newX, newY);
             newFi = radToDegs(fiPrepInRads(newX, newY));
             lxCounter = 0;  
-            for (let lx = (newR <= l) ? l - newR: newR - l; lx <= l; lx += 0.125) {
+            for (let lx = (newR <= l) ? l - newR + 0.00001: newR - l + 0.00001; lx <= l; lx += 0.125) {
                 lxCounter++;
                 if (lxCounter < 10) {
                     for (let intermediateLx = lx; intermediateLx < lx + 0.125; intermediateLx += 0.01) {
-                        abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) - Math.acos(Number(((l**2 + newR**2 - intermediateLx**2) / (2 * l * newR)).toFixed(10)))));
+                        abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) - Math.acos(arccosArg(Number(((l**2 + newR**2 - intermediateLx**2) / (2 * l * newR)))))));
                         abandoned_f2 = abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2;
 
-                        abandoned_f3 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(Number(((l**2 + intermediateLx**2 - newR**2) / (2*l*intermediateLx)).toFixed(10)))));
+                        abandoned_f3 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(arccosArg(Number(((l**2 + intermediateLx**2 - newR**2) / (2*l*intermediateLx)))))));
                         abandoned_f3 = abandoned_f3 === 360 / discretFi ? 0 : abandoned_f3;
 
                         if (PS[i][abandoned_f2][abandoned_f3] === 0) {
                             PS[i][abandoned_f2][abandoned_f3] = 1;
 
-                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
-                            PS[newAban1][newAban2][newAban3] = 1;
+                            // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
+                            // PS[newAban1][newAban2][newAban3] = 1;
 
-                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
-                            PS[newAban1][newAban2][newAban3] = 1;
+                            // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
+                            // PS[newAban1][newAban2][newAban3] = 1;
 
                             [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 2]);
                             PS[newAban1][newAban2][newAban3] = 1;
@@ -583,21 +775,21 @@ function handleObstacles() {
                             PS[newAban1][newAban2][newAban3] = 1;
                         }
 
-                        abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) + Math.acos(Number(((l**2 + newR**2 - intermediateLx**2) / (2*l*newR)).toFixed(10)))));
+                        abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) + Math.acos(arccosArg(Number(((l**2 + newR**2 - intermediateLx**2) / (2*l*newR)))))));
                         abandoned_f2 = abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2;
 
-                        abandoned_f3 = fiToDiscret(radToDegs(Math.acos(Number(((l**2 + intermediateLx**2 - newR**2) / (2*l*intermediateLx)).toFixed(10)))));
+                        abandoned_f3 = fiToDiscret(radToDegs(Math.acos(arccosArg(Number(((l**2 + intermediateLx**2 - newR**2) / (2*l*intermediateLx)))))));
                         abandoned_f3 = abandoned_f3 === 360 / discretFi ? 0 : abandoned_f3;
 
                         if (PS[i][abandoned_f2][abandoned_f3] === 0) {
 
                             PS[i][abandoned_f2][abandoned_f3] = 1;
 
-                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
-                            PS[newAban1][newAban2][newAban3] = 1;
+                            // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
+                            // PS[newAban1][newAban2][newAban3] = 1;
 
-                            [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
-                            PS[newAban1][newAban2][newAban3] = 1;
+                            // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
+                            // PS[newAban1][newAban2][newAban3] = 1;
 
                             [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 2]);
                             PS[newAban1][newAban2][newAban3] = 1;
@@ -614,13 +806,33 @@ function handleObstacles() {
                     }
                 } else {
 
-                    abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) - Math.acos(Number(((l**2 + newR**2 - lx**2) / (2 * l * newR)).toFixed(10)))));
+                    abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) - Math.acos(arccosArg(Number(((l**2 + newR**2 - lx**2) / (2 * l * newR)))))));
                     abandoned_f2 = abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2;
 
-                    abandoned_f3 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(Number(((l**2 + lx**2 - newR**2) / (2*l*lx)).toFixed(10)))));
+                    abandoned_f3 = fiToDiscret(radToDegs(Math.PI*2 - Math.acos(arccosArg(Number(((l**2 + lx**2 - newR**2) / (2*l*lx)))))));
                     abandoned_f3 = abandoned_f3 === 360 / discretFi ? 0 : abandoned_f3;
 
-                    PS[i][abandoned_f2][abandoned_f3] = 1;
+                    if (PS[i][abandoned_f2][abandoned_f3] === 0) {
+                        PS[i][abandoned_f2][abandoned_f3] = 1;
+
+                        // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
+                        // PS[newAban1][newAban2][newAban3] = 1;
+
+                        // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
+                        // PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 2]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 2]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 3]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 3]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+                    }
 
                     // расширение
                     neighs = neighbors6(i, abandoned_f2, abandoned_f3);
@@ -631,13 +843,33 @@ function handleObstacles() {
 
                     // points.push([i*discretFi, abandoned_f2*discretFi, abandoned_f3*discretFi]);
 
-                    abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) + Math.acos(Number(((l**2 + newR**2 - lx**2) / (2*l*newR)).toFixed(10)))));
+                    abandoned_f2 = fiToDiscret(180 + radToDegs(degToRads(newFi) + Math.acos(arccosArg(Number(((l**2 + newR**2 - lx**2) / (2*l*newR)))))));
                     abandoned_f2 = abandoned_f2 === 360 / discretFi ? 0 : abandoned_f2;
 
-                    abandoned_f3 = fiToDiscret(radToDegs(Math.acos(Number(((l**2 + lx**2 - newR**2) / (2*l*lx)).toFixed(10)))));
+                    abandoned_f3 = fiToDiscret(radToDegs(Math.acos(arccosArg(Number(((l**2 + lx**2 - newR**2) / (2*l*lx)))))));
                     abandoned_f3 = abandoned_f3 === 360 / discretFi ? 0 : abandoned_f3;
 
-                    PS[i][abandoned_f2][abandoned_f3] = 1;
+                    if (PS[i][abandoned_f2][abandoned_f3] === 0) {
+                        PS[i][abandoned_f2][abandoned_f3] = 1;
+
+                        // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 1]);
+                        // PS[newAban1][newAban2][newAban3] = 1;
+
+                        // [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 1]);
+                        // PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 2]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 2]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 + 3]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+
+                        [newAban1, newAban2, newAban3] = makePointValid([i, abandoned_f2, abandoned_f3 - 3]);
+                        PS[newAban1][newAban2][newAban3] = 1;
+                    }
 
                     // расширение
                     neighs = neighbors6(i, abandoned_f2, abandoned_f3);
@@ -663,6 +895,34 @@ function handleObstacles() {
     // }
 }
 
+// function handleObstaclesV2() {
+//     for (let obstacleIndex = 0; obstacleIndex < obstacles.length; obstacleIndex++) {
+//         let [x, y] = obstacles[obstacleIndex];
+//         let r = rToDiscret(dist(0, 0, x, y));
+//         let fi = fiPrepInRads(x, y);
+
+//         // запрет
+//         for (let i = 0; i < DATA[discretR].length; i++) {
+//             [abandoned_f1, abandoned_f2, abandoned_f3] = [DATA[discretR][i][0], DATA[discretR][i][1], DATA[discretR][i][2]];
+
+//             if (PS[abandoned_f1][abandoned_f2][abandoned_f3] === 0) {
+
+//                 PS[abandoned_f1][abandoned_f2][abandoned_f3] = 1;
+
+//                 let neighs = neighbors6(abandoned_f1, abandoned_f2, abandoned_f3);
+//                 for (let i = 0; i < neighs.length; i++) {
+//                     [newAban1, newAban2, newAban3] = neighs[i];
+//                     PS[newAban1][newAban2][newAban3] = 1;
+//                 }
+//             }
+//         }
+//     }
+// }
+
+function div(val, by){
+    return (val - val % by) / by;
+}
+
 // fi в градусах.
 function toNew(x, y, fiLocal) {
     return [
@@ -681,13 +941,13 @@ function makeProjection() {
                 current_discret = fiToDiscret(value);
                 if ((PS[current_discret === 360 / discretFi ? 0 : current_discret][i][j]) === 1) {
                     ctx2.fillStyle = "black";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 } else if ((PS[current_discret === 360 / discretFi ? 0 : current_discret][i][j]) === 0){
                     ctx2.fillStyle = "gray";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 } else {
                     ctx2.fillStyle = "green";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 }
             }
         }
@@ -697,13 +957,13 @@ function makeProjection() {
             for (let j = 0; j < 360 / discretFi; j++) {
                 if ((PS[i][fiToDiscret(value)][j]) === 1) {
                     ctx2.fillStyle = "black";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 } else if ((PS[i][fiToDiscret(value)][j]) === 0){
                     ctx2.fillStyle = "gray";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 } else {
                     ctx2.fillStyle = "green";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 }
             }
         }
@@ -713,13 +973,13 @@ function makeProjection() {
             for (let j = 0; j < 360 / discretFi; j++) {
                 if ((PS[i][j][fiToDiscret(value)]) === 1) {
                     ctx2.fillStyle = "black";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 } else if ((PS[i][j][fiToDiscret(value)]) === 0){
                     ctx2.fillStyle = "gray";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 } else {
                     ctx2.fillStyle = "green";
-                    ctx2.fillRect(i*discretFi, 360 - j*discretFi, discretFi, discretFi);
+                    ctx2.fillRect(i*discretFi + 120, 360 - j*discretFi + 120, discretFi, discretFi);
                 }
             }
         }
@@ -850,7 +1110,7 @@ function getWayByWaveAlgorithm() {
             [neif1, neif2, neif3] = neighs[neighborIndex];
             if (FRONTS[neif1][neif2][neif3] === waveNumber - 1) {
                 way.push([neif1, neif2, neif3]);
-                PS[neif1][neif2][neif3] = 'way_part';
+                // PS[neif1][neif2][neif3] = 'way_part';
                 neighs = neighbors6(neif1, neif2, neif3);
                 break;
             }
@@ -861,6 +1121,7 @@ function getWayByWaveAlgorithm() {
 }
 
 function start() {
+    clear();
     if (startPosIsFixed && finPosIsFixed) {
         let ind = 0;
 
@@ -882,10 +1143,6 @@ function start() {
         let f2traj = [];
         let f3traj = [];
 
-        // let f3GraphCoords = [];
-        // let f2GraphCoords = [];
-        // let f1GraphCoords = [];
-
         for (let i = 0; i < way.length; i++) {
             f1traj.push(way[i][0] * discretFi);
             f2traj.push(way[i][1] * discretFi);
@@ -895,45 +1152,43 @@ function start() {
         let interval = setInterval( function tick() {
             if (ind < way.length) {
                 clear();
+                clear2();
                 make(way[ind][0]*discretFi, way[ind][1]*discretFi, way[ind][2]*discretFi);
+                console.log(way[ind]);
+
+                
+
+                ctx2.beginPath();
+                ctx2.lineWidth = 2;
                 ctx2.fillStyle = "black";
                 ctx2.strokeStyle = "black";
-                // ctx2.beginPath();
-                // ctx2.arc(currentX, 600 - f1traj[ind] * deltaY, 3, 0, Math.PI * 2, false);
-                // ctx2.fill();
-                // ctx2.closePath();
-
-                ctx2.beginPath();
                 ctx2.moveTo(currentX, 600 - f1traj[ind] * deltaY);
                 ctx2.lineTo(currentX + deltaX, 600 - f1traj[ind + 1] * deltaY);
-                ctx2.stroke();
                 ctx2.closePath();
+                ctx2.stroke();
 
+                
+
+                ctx2.beginPath();
+                ctx2.lineWidth = 2;
                 ctx2.fillStyle = "green";
                 ctx2.strokeStyle = "green";
-                // ctx2.beginPath();
-                // ctx2.arc(currentX, 400 - f2traj[ind] * deltaY, 3, 0, Math.PI * 2, false);
-                // ctx2.fill();
-                // ctx2.closePath();
-
-                ctx2.beginPath();
                 ctx2.moveTo(currentX, 400 - f2traj[ind] * deltaY);
                 ctx2.lineTo(currentX + deltaX, 400 - f2traj[ind + 1] * deltaY);
-                ctx2.stroke();
                 ctx2.closePath();
+                ctx2.stroke();
 
-                ctx2.fillStyle = "purple";
-                ctx2.strokeStyle = "purple";
-                // ctx2.beginPath();
-                // ctx2.arc(currentX, 200 - f3traj[ind] * deltaY, 3, 0, Math.PI * 2, false);
-                // ctx2.fill();
-                // ctx2.closePath();
+                
 
                 ctx2.beginPath();
+                ctx2.lineWidth = 2;
+                ctx2.fillStyle = "purple";
+                ctx2.strokeStyle = "purple";
                 ctx2.moveTo(currentX, 200 - f3traj[ind] * deltaY);
                 ctx2.lineTo(currentX + deltaX, 200 - f3traj[ind + 1] * deltaY);
                 ctx2.stroke();
                 ctx2.closePath();
+                
                 
                 currentX += deltaX;
                 ind++;
@@ -943,5 +1198,12 @@ function start() {
         }, 25);
     } else {
         console.log('Не поехали.');
-    }   
+    }
 }
+
+function read() {
+    let file = document.getElementById("file").files[0];
+    let reader = new FileReader();
+    reader.readAsText(file);
+}
+
